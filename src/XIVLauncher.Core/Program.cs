@@ -141,10 +141,13 @@ sealed class Program
 
         Config.GameModeEnabled ??= false;
         Config.DxvkAsyncEnabled ??= true;
-        Config.ESyncEnabled ??= true;
+        // ESync and MSync must not be enabled together: on macOS the combination
+        // causes multi-second stalls on synchronization primitives (threads left
+        // parked in msync_wait_objects). MSync is the native path on macOS.
+        Config.ESyncEnabled ??= !RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
         Config.FSyncEnabled ??= false;
         Config.MSyncEnabled ??= true;
-        Config.DxmtEnabled ??= false;
+        Config.DxmtEnabled ??= RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
         Config.MetalFxEnabled ??= false;
         Config.MetalFxFactor ??= 2;
         Config.SetWin7 ??= true;
@@ -325,6 +328,21 @@ sealed class Program
             if (!window.Exists)
                 break;
 
+            // Window operations must run on the main thread on macOS (AppKit requirement)
+            if (windowHideRequested)
+            {
+                windowHideRequested = false;
+                window.Visible = false;
+                continue;
+            }
+
+            if (windowShowRequested)
+            {
+                windowShowRequested = false;
+                window.Visible = true;
+                Invalidate();
+            }
+
             var overlayNeedsPresent = false;
 
             if (Steam != null && Steam.IsValid)
@@ -404,14 +422,20 @@ sealed class Program
             Config.MetalFxFactor);
     }
 
+    private static volatile bool windowHideRequested;
+    private static volatile bool windowShowRequested;
+
+    // NOTE: AppKit requires all window operations to happen on the main thread.
+    // These may be called from background threads (e.g. the login Task), so they
+    // only set flags which the main loop consumes.
     public static void ShowWindow()
     {
-        window.Visible = true;
+        windowShowRequested = true;
     }
 
     public static void HideWindow()
     {
-        window.Visible = false;
+        windowHideRequested = true;
     }
     
     

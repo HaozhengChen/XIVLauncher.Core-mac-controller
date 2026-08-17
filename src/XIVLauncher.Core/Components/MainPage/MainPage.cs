@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Numerics;
 
 using Castle.Core.Internal;
@@ -17,6 +17,7 @@ using XIVLauncher.Common.Game.Exceptions;
 using XIVLauncher.Common.Game.Patch;
 using XIVLauncher.Common.Game.Patch.Acquisition;
 using XIVLauncher.Common.Game.Patch.PatchList;
+using XIVLauncher.Common.Http;
 using XIVLauncher.Common.PlatformAbstractions;
 using XIVLauncher.Common.Unix;
 using XIVLauncher.Common.Unix.Compatibility;
@@ -48,6 +49,23 @@ public class MainPage : Page
         }
     }
     private CancellationTokenSource loginCts;
+
+    private DcTravelListener? dcTravelListener;
+
+    private void StopDcTravelListener()
+    {
+        try
+        {
+            this.dcTravelListener?.Stop();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Could not shut down DcTravelListener");
+        }
+
+        this.dcTravelListener = null;
+    }
+
     public void CancelLogin()
     {
         if (this.loginCts != null)
@@ -315,7 +333,8 @@ public class MainPage : Page
             }
             throw;
         }
-        var loginResult = await TryLoginToGame(finalLoginType, loginType, username, serect, doingAutoLogin, action).ConfigureAwait(false);
+        var dcTraveler = new DcTraveler(string.Empty);
+        var loginResult = await TryLoginToGame(finalLoginType, loginType, username, serect, doingAutoLogin, dcTraveler, action).ConfigureAwait(false);
 
         if (loginResult == null)
             return false;
@@ -364,6 +383,50 @@ public class MainPage : Page
                 this.App.Accounts.CurrentAccount = accountToSave;
                 this.App.Accounts.Save();
             }
+
+            if (loginResult.State == Launcher.LoginState.Ok && action != LoginAction.GameNoLaunch &&
+                loginType != LoginType.WeGameSid && App.Settings.DalamudEnabled.GetValueOrDefault(true))
+            {
+                // 超域旅行: 无论初始化是否成功都启动监听器, 游戏内插件可通过 RPC 错误感知失败
+                loginResult.DcTravelPort = ApiHelpers.GetAvailablePort();
+                this.dcTravelListener = new DcTravelListener(dcTraveler, loginResult.DcTravelPort, false);
+
+                dcTraveler.SetSdoAreaFunc = name =>
+                {
+                    var area = this.loginFrame.SdoAreas.FirstOrDefault(x => x.AreaName == name);
+                    if (area != null)
+                    {
+                        this.Area = area;
+                        Log.Information("[DcTravel] 切换大区: {AreaName}", name);
+                    }
+                    else
+                    {
+                        Log.Warning("[DcTravel] 未找到大区: {AreaName}", name);
+                    }
+                };
+
+                if (doingAutoLogin && !string.IsNullOrEmpty(loginResult.OauthLogin.AutoLoginSessionKey))
+                {
+                    dcTraveler.RefreshGameSessionIdByAutoLoginFunc = async () =>
+                    {
+                        var newLoginResult = await this.App.Launcher.LoginBySessionKey(username, loginResult.OauthLogin.AutoLoginSessionKey, dcTraveler).ConfigureAwait(false);
+                        return newLoginResult.OauthLogin.SessionId;
+                    };
+                }
+
+                _ = this.dcTravelListener.StartAsync();
+                Log.Information("[DcTravel] 打开监听端口: {DcTravelPort}", loginResult.DcTravelPort);
+
+                try
+                {
+                    await dcTraveler.GetValidCookie().ConfigureAwait(false);
+                    _ = dcTraveler.KeepCookieAlive();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "[DcTravel] 超域旅行初始化失败, 监听器仍在运行");
+                }
+            }
         }
             
         Log.Information("[LR] {State} {NumPatches} {Playable}",
@@ -376,7 +439,7 @@ public class MainPage : Page
         return await TryProcessLoginResult(loginResult, false, action).ConfigureAwait(false);
     }
 
-    private async Task<Launcher.LoginResult> TryLoginToGame(LoginType type, LoginType fallbackLoginType, string username, string secret, bool autoLogin, LoginAction action)
+    private async Task<Launcher.LoginResult> TryLoginToGame(LoginType type, LoginType fallbackLoginType, string username, string secret, bool autoLogin, DcTraveler dcTraveler, LoginAction action)
     {
         try
         {
@@ -395,7 +458,7 @@ public class MainPage : Page
             {
                 try
                 {
-                    return await this.App.Launcher.LoginBySessionKey(username, autoLoginSessionKey: secret, null).ConfigureAwait(false);
+                    return await this.App.Launcher.LoginBySessionKey(username, autoLoginSessionKey: secret, dcTraveler).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -408,7 +471,7 @@ public class MainPage : Page
             switch (type)
             {
                 case LoginType.SdoStatic:
-                    return await this.App.Launcher.LoginBySdoStatic(username, password: secret, null).ConfigureAwait(false);
+                    return await this.App.Launcher.LoginBySdoStatic(username, password: secret, dcTraveler).ConfigureAwait(false);
 
                 case LoginType.SdoSlide:
                     return await this.App.Launcher.LoginBySlide(username, autoLogin, this.loginCts, (code) =>
@@ -416,7 +479,7 @@ public class MainPage : Page
                         Log.Information($"叨鱼确认码:{code}");
                         this.LoginMessage = $"确认码: {code}";
                         this.App.StartLoading("正在登录...",this.LoginMessage);
-                    }, null).ConfigureAwait(false);
+                    }, dcTraveler).ConfigureAwait(false);
 
                 case LoginType.SdoQrCode:
                     return await this.App.Launcher.LoginByScanQrCode(autoLogin, this.loginCts, (qrBytes) =>
@@ -427,10 +490,10 @@ public class MainPage : Page
                         {
                             App.WaitForQr(() => CancelLogin());
                         }).Start();
-                    }, null).ConfigureAwait(false);
+                    }, dcTraveler).ConfigureAwait(false);
 
                 case LoginType.WeGameToken:
-                    return await this.App.Launcher.LoginByWeGameToken(username, token: secret, autoLogin, null).ConfigureAwait(false);
+                    return await this.App.Launcher.LoginByWeGameToken(username, token: secret, autoLogin, dcTraveler).ConfigureAwait(false);
 
                 case LoginType.WeGameSid:
                     return await this.App.Launcher.LoginBySid(username, sid: secret).ConfigureAwait(false);
@@ -636,6 +699,7 @@ public class MainPage : Page
             {
                 Log.Error(ex, "StartGameAndError resulted in an exception.");
 
+                StopDcTravelListener();
                 exceptions.Add(ex);
                 throw;
             }
@@ -867,7 +931,10 @@ public class MainPage : Page
             signal.Dispose();
 
             if (isFailed)
+            {
+                StopDcTravelListener();
                 return null!;
+            }
 
             App.StartLoading("正在开始游戏...", "玩得开心！");
 
@@ -904,7 +971,7 @@ public class MainPage : Page
         var launchedProcess = App.Launcher.LaunchGameSdo(runner,
             loginResult.OauthLogin.SessionId,
             loginResult.OauthLogin.SndaId,
-            0,
+            loginResult.DcTravelPort,
             Area.Areaid,
             Area.AreaLobby,
             Area.AreaGm,
@@ -930,6 +997,7 @@ public class MainPage : Page
         {
             Log.Information("GameProcess was null...");
             IsLoggingIn = false;
+            StopDcTravelListener();
             return null!;
         }
 
@@ -957,6 +1025,7 @@ public class MainPage : Page
 
             IsLoggingIn = false;
 
+            StopDcTravelListener();
             addonMgr.StopAddons();
             throw;
         }
@@ -966,6 +1035,8 @@ public class MainPage : Page
         await Task.Run(() => launchedProcess!.WaitForExit()).ConfigureAwait(false);
 
         Log.Verbose("Game has exited");
+
+        StopDcTravelListener();
 
         if (addonMgr.IsRunning)
             addonMgr.StopAddons();
