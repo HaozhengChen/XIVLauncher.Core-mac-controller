@@ -1,6 +1,6 @@
 # XIVLauncher.Core macOS 分支说明
 
-本分支（`mac`，基于 ottercorp `cn`）是在 macOS（Apple Silicon）上运行国服 FFXIV 的个人适配分支。游戏经 Rosetta 2 + wine（XIV on Mac 5.3.1）+ DXMT（D3D11→Metal）运行；Dalamud 换用 Soil 社区分发（无插件封禁）。
+本分支（`mac`，基于 ottercorp `cn`）是在 macOS（Apple Silicon）上运行国服 FFXIV 的个人适配分支。游戏经 Rosetta 2 + Wine 11 + DXMT v0.72（D3D11→Metal）运行；Dalamud 换用 Soil 社区分发（无插件封禁）。
 
 ## 改动清单
 
@@ -10,6 +10,8 @@
 |---|---|
 | `src/XIVLauncher.Core/Program.cs` | macOS 默认值修正：`DxmtEnabled` 默认开（原默认关会导致走 DXVK/MoltenVK 老路径）；`ESyncEnabled` 默认关（与 MSync 同开会造成数秒级同步原语停顿，见下）。`ShowWindow`/`HideWindow` 改为标志位编组到主线程执行——AppKit 要求窗口操作必须在主线程，原先后台线程直调导致"游戏启动后窗口不隐藏、不响应关闭" |
 | `src/XIVLauncher.Core/Components/MainPage/MainPage.cs` | 接入超域旅行（DCTravel）本地 API 完整生命周期：登录成功后随机端口起 `DcTravelListener`（明文 JSON、绑 127.0.0.1）、经 `XL.DcTraveler=<port>` 游戏参数通知插件、游戏退出后停止；供 DCTravelerX 插件使用 |
+| `src/XIVLauncher.Common.Unix/Compatibility/CompatibilityTools.cs` | macOS managed Wine 改为版本化 `wine-11.0` 目录，从 R2 下载 Wine 11；旧 XOM 5.3.1 `wine/` 缓存不覆盖 |
+| `src/XIVLauncher.Common.Unix/Compatibility/Dxmt.cs` | DXMT 改为版本化 `dxmt-wine11-v0.72` 目录，从 R2 下载匹配 Wine 11 的 DXMT v0.72；旧 XOM 5.3.1 缓存不覆盖 |
 | `src/XIVLauncher.Core/Resources/libsdl2.dylib` | 仓库自带的 2022 年旧版 SDL2 → 官方 SDL2 2.32.10 universal（x86_64+arm64）。旧版在 macOS 26 上窗口事件投递异常 |
 
 ### 子模块（lib/FFXIVQuickLauncher，本地 `mac` 分支）
@@ -24,7 +26,8 @@
 
 ### 环境（非代码，首次部署已完成）
 
-- wine：XIV on Mac 5.3.1 包（启动器自动下载）；prefix：`~/.xlcore_cn/wineprefix`
+- managed Wine：Wine 11 包（启动器自动下载至 `~/.xlcore_cn/compatibilitytool/beta/wine-11.0/`）；prefix：`~/.xlcore_cn/wineprefix`。Custom Wine 配置不受该迁移影响。
+- managed DXMT：DXMT v0.72 下载至 `~/.xlcore_cn/compatibilitytool/dxmt/dxmt-wine11-v0.72/`；Wine 包内同时提供 `winemetal.dll` / `winemetal.so` 桥接库。
 - **注意**：存储根目录是 `~/.xlcore_cn`（`Storage.cs` 在非 Windows 用 `~/.{appName}`），不是 `~/.config`
 - prefix 已配置：Noto Sans CJK 字体 + 常用中文字体替换（FontSubstitutes）；`LeftCommandIsCtrl=y`/`RightCommandIsCtrl=y`（Command 映射为 Ctrl）
 - 手动在终端运行 wine 程序必须带全环境变量，否则 `Floating point exception: 8`：
@@ -44,7 +47,7 @@ dotnet publish -r osx-arm64 --sc -c Release -o ./dist/osx-arm64
 
 ## 已知问题与决策记录
 
-- **IME**：游戏本体输入框正常；**Dalamud 窗口内双重上屏**——winemac 发送 IME 消息顺序为 END 先于 RESULT（与真 Windows 相反），击中 Dalamud 内置 IME 状态机（`DalamudIme.cs`）。IME 激活时字母键被转成 `VK_PROCESSKEY` 导致快捷键失灵——解法：用非输入法键盘源（ABC）玩游戏。修复 DalamudIme 需本地构建 Dalamud 托管部分，未做
+- **IME**：旧 XOM 5.3.1 下的 Dalamud 双重上屏与 `VK_PROCESSKEY` 快捷键问题，已在 Wine 11 + DXMT v0.72 的实际游戏启动中确认解决（2026-08-23）。
 - **同步原语**：ESync 与 MSync 不可同开（本分支已改默认值）。证据与排查过程见工作区根目录 `../NOTES.md`
 - **Dalamud 来源**：Soil 静态分发（`dalamud-dis.atmoomen.top`），版本随 Soil 更新；无 `SupportedGameVer` 校验
 - **性能**：Rosetta 翻译税 + 跑图资源加载卡顿属固有成本；内存紧张时 macOS 压缩/换出会造成 1~2s 停顿，游戏时建议关闭浏览器等大内存应用

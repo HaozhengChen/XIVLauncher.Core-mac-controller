@@ -35,9 +35,9 @@ public class CompatibilityTools
     private const string WINE_XIV_RELEASE_URL = ServerAddress.S3Address + "/xlcore/deps/wine/fedora/wine-xiv-staging-fsync-git-fedora-10.8.r0.g47f77594.tar.xz";
     private const string WINE_XIV_RELEASE_NAME = "wine-xiv-staging-fsync-git-10.8.r0.g47f77594";
 #elif WINE_XIV_MACOS
-    // Wine from https://softwareupdate.xivmac.com/sites/default/files/update_data/XIV%20on%20Mac5.3.1.tar.xz;
-    private const string WINE_XIV_RELEASE_URL = ServerAddress.S3Address + "/xlcore/deps/wine/osx/xom-5.3.1/wine.tar.gz";
-    private const string WINE_XIV_RELEASE_NAME = "wine";
+    // Locally validated Wine 11 build with DXMT v0.72's Wine bridge libraries.
+    private const string WINE_XIV_RELEASE_URL = "https://ffxiv-r2.rika.link/xlcore/deps/wine/osx/wine-11.0/wine.tar.gz";
+    private const string WINE_XIV_RELEASE_NAME = "wine-11.0";
 #else
     // private const string WINE_XIV_RELEASE_URL = "https://github.com/goatcorp/wine-xiv-git/releases/download/10.8.r0.g47f77594/wine-xiv-staging-fsync-git-ubuntu-10.8.r0.g47f77594.tar.xz";
     private const string WINE_XIV_RELEASE_URL = ServerAddress.S3Address + "/xlcore/deps/wine/ubuntu/wine-xiv-staging-fsync-git-ubuntu-10.8.r0.g47f77594.tar.xz";

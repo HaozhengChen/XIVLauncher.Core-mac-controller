@@ -9,8 +9,8 @@ namespace XIVLauncher.Common.Unix.Compatibility;
 
 public static class Dxmt
 {
-    private const string DXMT_DOWNLOAD = ServerAddress.S3Address + "/xlcore/deps/dxmt/xom-5.3.1/dxmt.tar.gz";
-    private const string DXMT_NAME = "dxmt";
+    private const string DXMT_DOWNLOAD = "https://ffxiv-r2.rika.link/xlcore/deps/dxmt/wine-11.0/dxmt-v0.72.tar.gz";
+    private const string DXMT_NAME = "dxmt-wine11-v0.72";
 
     public static async Task InstallDxmt(DirectoryInfo prefix, DirectoryInfo installDirectory)
     {

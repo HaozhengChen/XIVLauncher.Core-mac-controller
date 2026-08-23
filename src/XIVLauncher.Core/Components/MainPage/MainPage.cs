@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
+using System.Text;
+using System.Text.Json;
 
 using Castle.Core.Internal;
 
@@ -976,7 +978,7 @@ public class MainPage : Page
             Area.AreaLobby,
             Area.AreaGm,
             Area.AreaConfigUpload,
-            "",
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(this.loginFrame.SdoAreas))),
             App.Settings.AdditionalArgs,
             App.Settings.GamePath,
             false,
