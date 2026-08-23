@@ -48,8 +48,8 @@ dotnet publish -r osx-arm64 --sc -c Release -o ./dist/osx-arm64
 ## GitHub Release（Apple Silicon）
 
 - 版本号位于 `src/XIVLauncher.Core/XIVLauncher.Core.csproj`，tag 必须与四段式版本号完全一致，例如 `1.1.2.8`。
-- `.github/workflows/release-macos.yml` 仅在 `RikaKagurasaka/XIVLauncher.Core` 的该类 tag 上运行，使用 `macos-14` 构建 `osx-arm64` 自包含包，并上传 `XIVLauncher.Core-osx-arm64.tar.gz` 与 `SHA256SUMS.txt`。
-- 子模块仍使用 SSH URL；仓库 Actions secrets 必须设置 `SUBMODULE_SSH_KEY`，对应具有 `RikaKagurasaka/FFXIVQuickLauncher` 只读权限的 deploy key。
+- `.github/workflows/release-macos.yml` 仅在 `rika-ffxiv/XIVLauncher.Core` 的该类 tag 上运行，使用 `macos-14` 构建 `osx-arm64` 自包含包，并上传 `XIVLauncher.Core-osx-arm64.tar.gz` 与 `SHA256SUMS.txt`。
+- `FFXIVQuickLauncher` 子模块已公开，使用 HTTPS URL，GitHub Actions 不需要额外 deploy key。
 - 发布前应从 Release 归档在干净目录启动一次，并验证 R2 managed Wine/DXMT 下载、Dalamud 和副本匹配 Dock 提醒。
 - 当前 managed Wine 包保持 `wine-11.0` 路径。覆盖该对象不会更新已有本地缓存；需要面向既有用户更新 Wine 时，必须新增版本目录并同步修改 `CompatibilityTools.cs`。
 
