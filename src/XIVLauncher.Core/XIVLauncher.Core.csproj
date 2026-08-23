@@ -9,11 +9,11 @@
         <LangVersion>latest</LangVersion>
         <ApplicationIcon>Resources\dalamud_icon.ico</ApplicationIcon>
 
-        <Version>1.1.2.7</Version>
+        <Version>1.1.2.8</Version>
         <FileVersion>$(Version)</FileVersion>
         <AssemblyVersion>$(Version)</AssemblyVersion>
 
-        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
         <PublishSingleFile>false</PublishSingleFile>
         <SelfContained>false</SelfContained>
 
