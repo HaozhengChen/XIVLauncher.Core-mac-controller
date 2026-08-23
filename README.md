@@ -1,31 +1,49 @@
-![xlcore_sized](https://user-images.githubusercontent.com/16760685/197423373-b6082cdb-dc1f-46db-8768-3f507f182ba8.png)
+# XIVLauncher.Core for macOS
 
-# XIVLauncher.Core
+这是面向 **macOS Apple Silicon** 的《最终幻想 XIV》国服启动器分支，基于 [ottercorp/XIVLauncher.Core](https://github.com/ottercorp/XIVLauncher.Core) 的 `cn` 分支维护。它不是上游的通用 Linux/Steam Deck 发行版，也不提供 Windows 支持。
 
-XIVLauncher 的跨平台版本，针对 Steam Deck 进行了优化。 附带一个 [为最终幻想 14 调整过的 WINE](https://github.com/goatcorp/wine-xiv-git).
+当前维护分支为 [`mac`](https://github.com/rika-ffxiv/XIVLauncher.Core/tree/mac)。发行版从 GitHub Releases 获取，构建目标为自包含的 `osx-arm64`。
 
-[反馈频道](https://qun.qq.com/qqweb/qunpro/share?_wv=3&_wwv=128&inviteCode=CZtWN&from=181074&biz=ka&shareSource=5)
+## 运行环境
 
-## 在 Steam Deck 上使用
+- Apple Silicon macOS；游戏 Windows 客户端通过 Rosetta 2 运行。
+- 启动器自动安装并使用本项目构建的 **Wine 11**，安装目录为 `~/.xlcore_cn/compatibilitytool/beta/wine-11.0/`。
+- 图形路径默认使用与 Wine 11 配套的 **DXMT v0.72**（Direct3D 11 到 Metal），安装目录为 `~/.xlcore_cn/compatibilitytool/dxmt/dxmt-wine11-v0.72/`。
+- 默认关闭 ESync、启用 MSync；两者同时启用会造成明显的同步停顿。
 
-如果您想在 Steam Deck 上使用 XIVLauncher，请随时[按照我们常见问题解答中的指南](https://aonyx.ffxiv.wang/faq/steamdeck)。 如果您遇到问题，可以[加入我们的反馈频道](<[https://discord.gg/3NMcUV5](https://qun.qq.com/qqweb/qunpro/share?_wv=3&_wwv=128&inviteCode=CZtWN&from=181074&biz=ka&shareSource=5)>) - 请不要使用 GitHub issues 进行故障排除，除非您确定您的问题是与 XIVLauncher 的代码相关。
+Wine 与 DXMT 的预构建包由启动器从项目的 R2 分发地址下载。已有 `wine-11.0` 本地缓存不会因服务端替换同名包而自动更新。
 
-## Building & Contributing
+## 此分支的主要修改
 
-1. Clone this repository with submodules
-2. Make sure you have a recent(.NET 6.0.400+) version of the .NET SDK installed
-3. Run `dotnet build` or `dotnet publish`
+- 修正 macOS 的窗口生命周期：所有 AppKit 窗口操作回到主线程执行，避免游戏启动后启动器无法正确隐藏或关闭。
+- 更新仓库内 SDL2 至 2.32.10 universal，修复新版 macOS 的窗口事件问题。
+- 将 managed Wine 从旧版 XOM 5.3.1 迁移至 Wine 11，并将 DXMT 升级至匹配的 v0.72；已在实际游戏启动中验证中文输入法可用。
+- 将 Dalamud、运行时信息和资产的下载切换到 Soil 静态分发；移除上游游戏版本门槛，保留下载完整性校验。
+- 接入 DCTravel 本地 RPC 生命周期，供兼容的 DCTraveler 插件在游戏启动期间使用。
+- 随附的 Wine 增加 `FlashWindowEx` 到 macOS Dock attention 的映射：Dalamud 等 Windows 程序请求任务栏闪烁时，Dock 会请求提醒；停止闪烁会取消提醒。
 
-Common components that are shared with the Windows version of XIVLauncher are linked as a submodule in the "lib" folder. XIVLauncher Core can run on Windows, but is by far not as polished as the [original Windows version](https://github.com/goatcorp/FFXIVQuickLauncher). Windows users should not use this application unless for troubleshooting purposes or development work.
+完整的技术细节、构建命令、发布流程和已知问题见 [MACOS.md](MACOS.md)。
 
-## 分发
+## 安装与启动
 
-XIVLauncher Core 具有适用于各种 Linux 发行版的社区包。 请注意，**只有 Flathub 版本是官方版本**，但其他版本是由社区成员**打包**。 社区包可能并不总是最新的，或者可能有损坏的版本或包含正在测试的功能（特别是如果标记为不稳定或 git）。 我们对其安全性或可靠性不承担任何责任。
+1. 从本仓库的 [Releases](https://github.com/rika-ffxiv/XIVLauncher.Core/releases) 下载 `XIVLauncher.Core-osx-arm64.tar.gz` 并解压。
+2. 在终端运行 `XIVLauncher.Core`。首次启动时在 macOS 的“隐私与安全性”设置中按需允许该未签名应用。
+3. 在启动器中选择游戏目录并登录；首次运行会下载 Wine 与 DXMT。
 
-| 仓库                                                                                  | 状态                                                                                                                                                                                                                                                |
-| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [**Flathub (official)**](https://flathub.org/apps/details/cn.ottercorp.xivlaunchercn) | ![Flathub](https://img.shields.io/flathub/v/cn.ottercorp.xivlaunchercn)                                                                                                                                                                             |
-| [AUR](https://aur.archlinux.org/packages/xivlauncher-cn-git)                          | ![AUR version](https://img.shields.io/aur/version/xivlauncher-cn-git)                                                                                                                                                                               |
-| [MPR (Debian+Ubuntu)](https://mpr.makedeb.org/packages/xivlauncher-cn)                | ![MPR package](https://repology.org/badge/version-for-repo/mpr/xivlauncher-cn.svg?header=MPR)                                                                                                                                                       |
-| [PRM (Fedora+Opensuse)](https://github.com/bamdragonfly/lure-repo)                    | ![RPM package](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbamdragonfly%2Flure-repo%2Fmaster%2Fxivlauncher-cn%2Fversion.json&query=%24.version&prefix=v&label=RPM&color=pink)                           |
-| [Chiyuki-Overlay (Gentoo)](https://github.com/IllyaTheHath/gentoo-overlay)            | ![Ebuild package](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FIllyaTheHath%2Fgentoo-overlay%2Fmaster%2Fgames-util%2Fxivlauncher-cn%2Fversion.xml&query=%2F%2Fversion&prefix=v&label=Ebuild&color=6E56AF) |
+配置、日志和 Wine prefix 位于 `~/.xlcore_cn/`；日志位于 `~/.xlcore_cn/logs/`。
+
+## 构建
+
+需要 .NET SDK 10 与 macOS 构建环境。克隆时须带上子模块：
+
+```sh
+git clone --recurse-submodules --branch mac https://github.com/rika-ffxiv/XIVLauncher.Core.git
+cd XIVLauncher.Core/src/XIVLauncher.Core
+dotnet publish -r osx-arm64 --self-contained -c Release -o ./dist/osx-arm64
+```
+
+`lib/FFXIVQuickLauncher` 子模块固定在本组织维护的 `mac` 分支；其中包含 Dalamud/资产分发与 DCTravel 的配套修改。
+
+## 免责声明
+
+本项目是非官方的社区维护分支，与 SQUARE ENIX、XIVLauncher 上游和 Dalamud 上游均无隶属关系。使用第三方启动器和插件存在风险，请自行判断并承担责任。
