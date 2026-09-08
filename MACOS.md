@@ -36,6 +36,12 @@
 
 ## 构建
 
+游戏补丁下载依赖 Homebrew 提供的 `aria2c`。Apple Silicon 原生 Homebrew 与 Intel Homebrew 均可：
+
+```bash
+brew install aria2
+```
+
 ```bash
 export PATH="$HOME/.dotnet:$PATH"   # .NET SDK 10.0.x（brew 或官方脚本安装均可）
 cd src/XIVLauncher.Core

@@ -7,6 +7,7 @@
 ## 运行环境
 
 - Apple Silicon macOS；游戏 Windows 客户端通过 Rosetta 2 运行。
+- 使用 Homebrew 安装 `aria2`（`brew install aria2`），用于下载游戏补丁。
 - 启动器自动安装并使用本项目构建的 **Wine 11**，安装目录为 `~/.xlcore_cn/compatibilitytool/beta/wine-11.0/`。
 - 图形路径默认使用与 Wine 11 配套的 **DXMT v0.72**（Direct3D 11 到 Metal），安装目录为 `~/.xlcore_cn/compatibilitytool/dxmt/dxmt-wine11-v0.72/`。
 - 默认关闭 ESync、启用 MSync；两者同时启用会造成明显的同步停顿。
