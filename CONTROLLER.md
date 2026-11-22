@@ -50,3 +50,7 @@ scripts/apply-patches.sh
 ```
 
 已经下载坏的资源，可用 `brotli -d` 解压并核对启动器日志中的远端 SHA-1。
+
+上游跟进：
+- Brotli 修复 PR：<https://github.com/rika-ffxiv/FFXIVQuickLauncher/pull/1>
+- 手柄支持讨论：<https://github.com/rika-ffxiv/XIVLauncher.Core/issues/1>
