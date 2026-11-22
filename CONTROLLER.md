@@ -37,3 +37,16 @@ MacBook Pro（Apple Silicon）、macOS 27、Rosetta 2、DualSense（蓝牙）。
 - 两个 Wine 并非同一分支，混用属于经验性方案，不保证所有版本组合可用。
 - Wine 为 LGPL，Gcenx 构建来自 <https://github.com/Gcenx/macOS_Wine_builds>；本仓库不分发任何二进制。
 - 本仓库基于 [rika-ffxiv/XIVLauncher.Core](https://github.com/rika-ffxiv/XIVLauncher.Core) `mac` 分支，许可证 GPL-3.0。
+
+## 附：Dalamud 资源下载修复（Brotli）
+
+上游 `HttpClientWithProgress` 只开启了 GZip 自动解压，却声明 `accept-encoding: gzip, deflate, br`。Cloudflare 因此返回 Brotli 压缩内容，启动器未解压就存盘，导致 Dalamud 的字体资源（`UIRes/*.otf|ttf`）哈希不符、字体损坏，游戏弹出 `Failed to initialize Dalamud base fonts`。
+
+修复补丁在 `patches/`，构建前执行：
+
+```bash
+git submodule update --init
+scripts/apply-patches.sh
+```
+
+已经下载坏的资源，可用 `brotli -d` 解压并核对启动器日志中的远端 SHA-1。
