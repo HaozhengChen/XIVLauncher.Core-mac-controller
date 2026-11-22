@@ -2,6 +2,22 @@
 
 > **本分支新增：macOS 手柄（Controller）支持**，见 [CONTROLLER.md](CONTROLLER.md)。
 
+## 快速开始（本分支）
+
+要求：Apple Silicon Mac、macOS 14+、Homebrew。
+
+```bash
+git clone https://github.com/HaozhengChen/XIVLauncher.Core-mac-controller.git
+cd XIVLauncher.Core-mac-controller
+scripts/install.sh          # 装依赖、应用补丁、编译，生成 dist/XIVLauncher.Core.app
+```
+
+1. 打开 `dist/XIVLauncher.Core.app`，登录并用默认（Managed）Wine 启动一次游戏，让启动器下载 Wine 与 DXMT，然后退出启动器。
+2. `scripts/build-controller-wine.sh --configure`：生成带手柄支持的 Wine，并自动写好启动器设置（会先备份 `launcher.ini`）。
+3. 连接手柄，打开启动器启动游戏。
+
+细节与原理见 [CONTROLLER.md](CONTROLLER.md)。
+
 这是面向 **macOS Apple Silicon** 的《最终幻想 XIV》国服启动器分支，基于 [ottercorp/XIVLauncher.Core](https://github.com/ottercorp/XIVLauncher.Core) 的 `cn` 分支维护。它不是上游的通用 Linux/Steam Deck 发行版，也不提供 Windows 支持。
 
 当前维护分支为 [`mac`](https://github.com/rika-ffxiv/XIVLauncher.Core/tree/mac)。发行版从 GitHub Releases 获取，构建目标为自包含的 `osx-arm64`。

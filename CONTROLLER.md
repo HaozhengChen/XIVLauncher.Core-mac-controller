@@ -24,7 +24,7 @@
    ```
 
    脚本会下载 Gcenx Wine Stable 11.0_1（校验 SHA-256），默认输出到 `~/.xlcore_cn/controller-wine`。
-3. 在启动器 设置 → Wine：版本选 Custom，路径填 `~/.xlcore_cn/controller-wine/bin`（写成绝对路径），DXMT 保持开启。
+3. 加 `--configure` 可自动写好启动器设置（需先退出启动器）；也可手动：设置 → Wine，版本选 Custom，路径填 `~/.xlcore_cn/controller-wine/bin`（绝对路径），DXMT 保持开启。
 4. 连接手柄后再启动游戏。
 
 ## 已验证环境
