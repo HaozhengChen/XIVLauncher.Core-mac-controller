@@ -1,5 +1,7 @@
 # XIVLauncher.Core for macOS
 
+> **本分支新增：macOS 手柄（Controller）支持**，见 [CONTROLLER.md](CONTROLLER.md)。
+
 这是面向 **macOS Apple Silicon** 的《最终幻想 XIV》国服启动器分支，基于 [ottercorp/XIVLauncher.Core](https://github.com/ottercorp/XIVLauncher.Core) 的 `cn` 分支维护。它不是上游的通用 Linux/Steam Deck 发行版，也不提供 Windows 支持。
 
 当前维护分支为 [`mac`](https://github.com/rika-ffxiv/XIVLauncher.Core/tree/mac)。发行版从 GitHub Releases 获取，构建目标为自包含的 `osx-arm64`。
